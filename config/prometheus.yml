@@ -22,7 +22,7 @@ scrape_configs:
     static_configs:
       - targets: ["log-aggregator:8000"]
     metrics_path: "/metrics"
-    scrape_interval: 10s  # Faster for security events
+    scrape_interval: 5s  # Faster for security events
 
   # The simulated network nodes (if they expose metrics)
   - job_name: "network_nodes"
