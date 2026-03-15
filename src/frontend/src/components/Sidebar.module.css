@@ -98,7 +98,7 @@
 .convItem {
   width: 100%;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
@@ -108,6 +108,7 @@
   cursor: pointer;
   transition: all 0.15s;
   text-align: left;
+  position: relative;
 }
 
 .convItem:hover {
@@ -143,6 +144,39 @@
   flex-shrink: 0;
 }
 
+.deleteBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.convItem:hover .deleteBtn {
+  opacity: 1;
+}
+
+.deleteBtn:hover {
+  background: var(--red-bg);
+  color: var(--red);
+}
+
+.emptyNav {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 8px 8px 4px;
+  font-style: italic;
+}
+
 .spacer {
   flex: 1;
   min-height: 8px;
@@ -166,6 +200,55 @@
   padding: 4px 0;
 }
 
+.statusHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statusCount {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.refreshBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 2px;
+  border-radius: 3px;
+  transition: color 0.15s;
+}
+
+.refreshBtn:hover {
+  color: var(--accent);
+}
+
+.refreshBtn:disabled {
+  cursor: default;
+}
+
+.refreshBtnSpin svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.lastChecked {
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
 .statusList {
   list-style: none;
   display: flex;
@@ -186,6 +269,16 @@
   height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
+  transition: background 0.3s;
+}
+
+.statusDotPulse {
+  animation: dotPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 1;   }
 }
 
 .statusLabel {

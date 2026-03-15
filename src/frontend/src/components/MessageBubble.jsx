@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Markdown from 'react-markdown'
 import {
   User,
   Bot,
@@ -31,7 +32,7 @@ const PHASE_META = {
   },
   report: {
     icon: FileText,
-    label: 'Incident Report',
+    label: 'Response',
     color: 'var(--purple)',
     bg: 'var(--purple-bg)',
   },
@@ -47,13 +48,16 @@ function PhaseBlock({ phase }) {
   }
   const Icon = meta.icon
 
+  // investigate phase shows raw tool I/O in monospace; all others render markdown
+  const isRaw = phase.name === 'investigate'
+
   return (
     <div className={styles.phaseBlock} style={{ '--phase-color': meta.color, '--phase-bg': meta.bg }}>
       <button className={styles.phaseHeader} onClick={() => setOpen((v) => !v)}>
         <span className={styles.phaseIconWrap}>
           <Icon size={13} />
         </span>
-        <span className={styles.phaseLabel}>{meta.label}</span>
+        <span className={styles.phaseLabel}>{phase.label ?? meta.label}</span>
         <ChevronDown
           size={13}
           className={styles.phaseChevron}
@@ -61,14 +65,43 @@ function PhaseBlock({ phase }) {
         />
       </button>
       {open && (
-        <pre className={styles.phaseContent}>{phase.content}</pre>
+        isRaw
+          ? <pre className={styles.phaseContent}>{phase.content}</pre>
+          : (
+            <div className={styles.phaseMarkdown}>
+              <Markdown
+                components={{
+                  code({ children }) {
+                    return <code className={styles.inlineCode}>{children}</code>
+                  },
+                  pre({ children }) {
+                    return <pre className={styles.codeBlock}>{children}</pre>
+                  },
+                }}
+              >
+                {phase.content}
+              </Markdown>
+            </div>
+          )
       )}
+    </div>
+  )
+}
+
+function StreamingIndicator() {
+  return (
+    <div className={styles.streamingIndicator}>
+      <span className={styles.streamingDot} />
+      <span className={styles.streamingDot} />
+      <span className={styles.streamingDot} />
     </div>
   )
 }
 
 export default function MessageBubble({ message }) {
   const isUser = message.role === 'user'
+  const isStreaming = !isUser && message.streaming
+  const hasPhases = !isUser && message.phases?.length > 0
 
   return (
     <div className={`${styles.row} ${isUser ? styles.rowUser : styles.rowAgent}`}>
@@ -90,11 +123,20 @@ export default function MessageBubble({ message }) {
         )}
 
         {/* Agent message: phase blocks */}
-        {!isUser && message.phases && (
+        {!isUser && hasPhases && (
           <div className={styles.phases}>
             {message.phases.map((phase) => (
               <PhaseBlock key={phase.name} phase={phase} />
             ))}
+            {isStreaming && <StreamingIndicator />}
+          </div>
+        )}
+
+        {/* Agent message: thinking state (no phases yet) */}
+        {!isUser && !hasPhases && isStreaming && (
+          <div className={styles.thinkingBubble}>
+            <StreamingIndicator />
+            <span className={styles.thinkingLabel}>Thinking…</span>
           </div>
         )}
       </div>

@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { ShieldAlert } from 'lucide-react'
 import MessageBubble from './MessageBubble'
-import { MOCK_MESSAGES } from '../mockData'
 import styles from './ChatWindow.module.css'
 
 function EmptyState() {
@@ -26,13 +25,12 @@ function EmptyState() {
   )
 }
 
-export default function ChatWindow({ conversationId }) {
+export default function ChatWindow({ messages }) {
   const bottomRef = useRef(null)
-  const messages = conversationId === 'c-001' ? MOCK_MESSAGES : []
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages.length])
+  }, [messages.length, messages])
 
   return (
     <div className={styles.window}>

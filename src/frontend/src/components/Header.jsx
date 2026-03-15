@@ -1,23 +1,21 @@
 import { AlertTriangle, Bell } from 'lucide-react'
-import { MOCK_CONVERSATIONS } from '../mockData'
 import styles from './Header.module.css'
 
 const SEVERITY_LABEL = {
-  critical: { label: 'Critical', color: 'var(--red)', bg: 'var(--red-bg)' },
-  warning:  { label: 'Warning',  color: 'var(--yellow)', bg: 'var(--yellow-bg)' },
-  info:     { label: 'Info',     color: 'var(--accent)', bg: 'var(--accent-glow)' },
+  critical: { label: 'Critical', color: 'var(--red)',    bg: 'var(--red-bg)'       },
+  warning:  { label: 'Warning',  color: 'var(--yellow)', bg: 'var(--yellow-bg)'    },
+  info:     { label: 'Info',     color: 'var(--accent)', bg: 'var(--accent-glow)'  },
 }
 
-export default function Header({ conversationId }) {
-  const conv = MOCK_CONVERSATIONS.find((c) => c.id === conversationId)
-  const severity = conv ? SEVERITY_LABEL[conv.severity] : null
+export default function Header({ conversation }) {
+  const severity = conversation ? SEVERITY_LABEL[conversation.severity] : null
 
   return (
     <header className={styles.header}>
       <div className={styles.left}>
-        {conv ? (
+        {conversation ? (
           <>
-            <span className={styles.title}>{conv.title}</span>
+            <span className={styles.title}>{conversation.title}</span>
             {severity && (
               <span
                 className={styles.badge}
