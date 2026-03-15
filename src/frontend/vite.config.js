@@ -5,9 +5,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
+    host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://localhost:5050',
+        target: 'http://ai-agent:5050',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },

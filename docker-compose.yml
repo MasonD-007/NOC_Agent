@@ -103,6 +103,16 @@ services:
     networks:
       - demo-network
 
+  frontend:
+    build: ./src/frontend
+    container_name: frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - ai-agent
+    networks:
+      - demo-network
+
   # ==========================================
   # LAYER 4: MONITORING (PROMETHEUS + LOG AGGREGATOR)
   # ==========================================
