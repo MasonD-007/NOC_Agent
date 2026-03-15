@@ -65,13 +65,13 @@ export default function App() {
 
       setLoading(true)
 
-      let toolLines = ''
+      let toolCalls = []
       let agentText = ''
 
       const flush = (done = false) => {
         const phases = []
-        if (toolLines.trim()) {
-          phases.push({ name: 'investigate', label: 'Investigation', content: toolLines.trim() })
+        if (toolCalls.length > 0) {
+          phases.push({ name: 'investigate', label: 'Investigation', content: toolCalls })
         }
         if (agentText.trim()) {
           phases.push({ name: 'report', label: 'Response', content: agentText.trim() })
@@ -118,12 +118,18 @@ export default function App() {
               const ev = JSON.parse(raw)
               if (ev.type === 'tool_call') {
                 for (const call of ev.calls ?? []) {
-                  const args = JSON.stringify(call.args ?? {})
-                  toolLines += `→ ${call.name}(${args})\n`
+                  toolCalls = [...toolCalls, { name: call.name, args: call.args ?? {}, result: null }]
                 }
                 flush()
               } else if (ev.type === 'tool_result') {
-                toolLines += `← ${ev.name}: ${ev.output}\n`
+                let matched = false
+                toolCalls = toolCalls.map((tc) => {
+                  if (!matched && tc.name === ev.name && tc.result === null) {
+                    matched = true
+                    return { ...tc, result: ev.output }
+                  }
+                  return tc
+                })
                 flush()
               } else if (ev.type === 'agent') {
                 agentText += ev.content
