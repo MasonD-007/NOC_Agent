@@ -26,6 +26,7 @@ scrape_configs:
 
   # The simulated network nodes (if they expose metrics)
   - job_name: "network_nodes"
+    scrape_interval: 5s
     static_configs:
       - targets:
           - "core-router:9100"

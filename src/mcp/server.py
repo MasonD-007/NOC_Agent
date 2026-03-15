@@ -1,91 +1,45 @@
 import os
+import json
+
 from dotenv import load_dotenv
 from mcp.server import Server
 from mcp.server.sse import SseServerTransport
 from mcp.types import Tool, TextContent
 from starlette.applications import Starlette
 from starlette.routing import Mount, Route
-from netmiko import ConnectHandler
 import uvicorn
+
+from tools import prometheus, ssh
 
 load_dotenv()
 
 server = Server("noc-security-agent")
 
-DEVICE_INVENTORY = {
-    "core-router": {
-        "device_type": "linux",
-        "host": "core-router",
-        "port": 2222,
-        "username": "admin",
-        "password": "hackathon",
-    },
-    "edge-sw-01": {
-        "device_type": "linux",
-        "host": "edge-sw-01",
-        "port": 2222,
-        "username": "admin",
-        "password": "hackathon",
-    },
-    "edge-sw-02": {
-        "device_type": "linux",
-        "host": "edge-sw-02",
-        "port": 2222,
-        "username": "admin",
-        "password": "hackathon",
-    },
-}
+# Collect tool definitions and handlers from each module
+TOOLS: dict[str, Tool] = {}
+HANDLERS: dict[str, callable] = {}
+
+for module in [prometheus, ssh]:
+    tools, handlers = module.get_tools()
+    for tool in tools:
+        TOOLS[tool.name] = tool
+        HANDLERS[tool.name] = handlers[tool.name]
 
 
 @server.list_tools()
 async def list_tools() -> list[Tool]:
-    return [
-        Tool(
-            name="ssh_execute",
-            description=(
-                "Execute a shell command on a network device via SSH. "
-                "device_hostname: Docker DNS name (e.g. 'edge-sw-02'). "
-                "command: shell command to run (e.g. 'iptables -A INPUT -s 172.20.0.5 -j DROP'). "
-                "confirmed: safety flag — must be true to execute."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "device_hostname": {"type": "string", "description": "Docker DNS name of the device"},
-                    "command": {"type": "string", "description": "Shell command to run on the device"},
-                    "confirmed": {"type": ["boolean", "string"], "description": "Safety flag — must be true to execute"},
-                },
-                "required": ["device_hostname", "command", "confirmed"],
-            },
-        )
-    ]
+    return list(TOOLS.values())
 
 
 @server.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[TextContent]:
-    if name == "ssh_execute":
-        device_hostname = arguments["device_hostname"]
-        command = arguments["command"]
-        confirmed = arguments.get("confirmed", False)
-        if isinstance(confirmed, str):
-            confirmed = confirmed.lower() == "true"
-
-        if not confirmed:
-            return [TextContent(type="text", text=f"Action requires confirmed=true. Got confirmed=false for: {command}")]
-
-        device = DEVICE_INVENTORY.get(device_hostname)
-        if device is None:
-            return [TextContent(type="text", text=f"Unknown device '{device_hostname}'. Available: {', '.join(DEVICE_INVENTORY.keys())}")]
-
-        try:
-            conn = ConnectHandler(**device)
-            output = conn.send_command(command)
-            conn.disconnect()
-            return [TextContent(type="text", text=f"SUCCESS on {device_hostname}:\n$ {command}\n{output}")]
-        except Exception as e:
-            return [TextContent(type="text", text=f"FAILED on {device_hostname}: {e}")]
-
-    return [TextContent(type="text", text=f"Unknown tool: {name}")]
+    handler = HANDLERS.get(name)
+    if handler is None:
+        return [TextContent(type="text", text=f"Unknown tool: {name}")]
+    result = handler(**arguments)
+    if isinstance(result, (dict, list)):
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    return [TextContent(type="text", text=str(result))]
 
 
 sse = SseServerTransport("/messages/")

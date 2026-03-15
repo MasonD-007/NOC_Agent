@@ -51,3 +51,12 @@ groups:
         annotations:
           summary: "High event rate from {{ $labels.source_ip }}"
           description: "{{ $labels.source_ip }} generating {{ $value }} events/min. Investigate for automated scanning."
+
+      # ── Node Down (switch failover) ───────────────────────────────────────
+      - alert: NodeDown
+        expr: up{job="network_nodes"} == 0
+        for: 5s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Network device {{ $labels.instance }} is down"
