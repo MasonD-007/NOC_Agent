@@ -75,8 +75,26 @@ services:
       - demo-network
 
   # ==========================================
-  # LAYER 4: MONITORING (PROMETHEUS)
+  # LAYER 4: MONITORING (PROMETHEUS + LOG AGGREGATOR)
   # ==========================================
+
+  log-aggregator:
+    image: python:3.11-slim
+    container_name: log-aggregator
+    working_dir: /app
+    volumes:
+      - ./promethisus/log_aggregator.py:/app/log_aggregator.py
+    ports:
+      - "8000:8000"
+    command: sh -c "pip install flask prometheus-client && python log_aggregator.py"
+    networks:
+      - demo-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -85,6 +103,8 @@ services:
       - ./alert.rules:/etc/prometheus/alert.rules
     ports:
       - "9090:9090"
+    depends_on:
+      - log-aggregator
     networks:
       - demo-network
 

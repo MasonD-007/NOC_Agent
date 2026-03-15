@@ -1,0 +1,53 @@
+groups:
+  - name: security_alerts
+    rules:
+
+      # ── Brute Force Detection ───────────────────────────────────────────────
+      - alert: BruteForceLoginAttempt
+        expr: increase(failed_logins_per_ip_total[5m]) > 10
+        for: 1m
+        labels:
+          severity: high
+        annotations:
+          summary: "Brute force from {{ $labels.source_ip }}"
+          description: "IP {{ $labels.source_ip }} had {{ $value }} failed logins in 5 minutes targeting user '{{ $labels.target_user }}'."
+
+      # ── Traffic Spike / DDoS ────────────────────────────────────────────────
+      - alert: TrafficSpike
+        expr: traffic_bytes_per_sec > 10000000
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Traffic spike from {{ $labels.source_ip }}"
+          description: "{{ $labels.source_ip }} is sending {{ $value | humanize }}B/s to {{ $labels.destination_ip }}. Possible DDoS."
+
+      # ── Suspicious Endpoint Scanning ────────────────────────────────────────
+      - alert: SuspiciousEndpointScanning
+        expr: increase(suspicious_requests_total[2m]) > 5
+        for: 30s
+        labels:
+          severity: medium
+        annotations:
+          summary: "Endpoint scanning from {{ $labels.source_ip }}"
+          description: "IP {{ $labels.source_ip }} hit suspicious endpoint {{ $labels.endpoint }} {{ $value }} times in 2 minutes."
+
+      # ── High Threat Payload ─────────────────────────────────────────────────
+      - alert: HighThreatPayload
+        expr: payload_threat_score > 60
+        for: 0s
+        labels:
+          severity: critical
+        annotations:
+          summary: "High-threat payload from {{ $labels.source_ip }}"
+          description: "Payload threat score {{ $value }}/100 detected from {{ $labels.source_ip }}. Possible injection attack."
+
+      # ── General Event Rate Spike ────────────────────────────────────────────
+      - alert: EventRateSpike
+        expr: recent_event_rate_per_minute > 50
+        for: 1m
+        labels:
+          severity: medium
+        annotations:
+          summary: "High event rate from {{ $labels.source_ip }}"
+          description: "{{ $labels.source_ip }} generating {{ $value }} events/min. Investigate for automated scanning."
