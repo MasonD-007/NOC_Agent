@@ -1,0 +1,11 @@
+# Test files
+promethisus/test_*.py
+test_*.py
+
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
