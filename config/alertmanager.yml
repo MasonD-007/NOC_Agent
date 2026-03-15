@@ -11,5 +11,5 @@ route:
 receivers:
   - name: "ai-agent-webhook"
     webhook_configs:
-      - url: "http://noc-brain:5000/alert"
+      - url: "http://ai-agent:5000/webhook"
         send_resolved: true

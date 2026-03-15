@@ -11,6 +11,7 @@ services:
     environment:
       - USER_NAME=admin
       - USER_PASSWORD=hackathon
+      - PASSWORD_ACCESS=true
       - SUDO_ACCESS=true
     networks:
       - demo-network
@@ -22,6 +23,7 @@ services:
     environment:
       - USER_NAME=admin
       - USER_PASSWORD=hackathon
+      - PASSWORD_ACCESS=true
       - SUDO_ACCESS=true
     networks:
       - demo-network
@@ -33,6 +35,7 @@ services:
     environment:
       - USER_NAME=admin
       - USER_PASSWORD=hackathon
+      - PASSWORD_ACCESS=true
       - SUDO_ACCESS=true
     volumes:
       # Mounts the script to auto-start the iperf3 server on boot
