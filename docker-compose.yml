@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # LAYER 1: THE NETWORK INFRASTRUCTURE
+  # ==========================================
+  core-router:
+    image: lscr.io/linuxserver/openssh-server:latest
+    container_name: core-router
+    hostname: core-router-tx
+    environment:
+      - USER_NAME=admin
+      - USER_PASSWORD=hackathon
+      - SUDO_ACCESS=true
+    networks:
+      - demo-network
+
+  edge-sw-01:
+    image: lscr.io/linuxserver/openssh-server:latest
+    container_name: edge-sw-01
+    hostname: edge-sw-01
+    environment:
+      - USER_NAME=admin
+      - USER_PASSWORD=hackathon
+      - SUDO_ACCESS=true
+    networks:
+      - demo-network
+
+  edge-sw-02:
+    image: lscr.io/linuxserver/openssh-server:latest
+    container_name: edge-sw-02
+    hostname: edge-sw-02
+    environment:
+      - USER_NAME=admin
+      - USER_PASSWORD=hackathon
+      - SUDO_ACCESS=true
+    volumes:
+      # Mounts the script to auto-start the iperf3 server on boot
+      - ./init-iperf.sh:/custom-cont-init.d/init-iperf.sh
+    networks:
+      - demo-network
+
+  # ==========================================
+  # LAYER 2: THE AUTOMATED ATTACKER
+  # ==========================================
+  rogue-device:
+    image: alpine:latest
+    container_name: rogue-device
+    hostname: unknown-device
+    # Installs iperf3, waits 15 seconds for the network to boot, 
+    # then blasts massive UDP traffic at edge-sw-02 for 5 minutes.
+    command: sh -c "apk add --no-cache iperf3 && sleep 15 && iperf3 -c edge-sw-02 -u -b 1000M -t 300"
+    networks:
+      - demo-network
+
+  # ==========================================
+  # LAYER 3: INTELLIGENCE (AI AGENT & WEBHOOK)
+  # ==========================================
+  ai-agent:
+    image: python:3.11-slim
+    container_name: ai-agent
+    working_dir: /app
+    volumes:
+      - ./agent.py:/app/agent.py
+    environment:
+      - NEBIUS_API_KEY=${NEBIUS_API_KEY}
+    # Exposing 5000 so Alertmanager can hit the Flask webhook
+    ports:
+      - "5000:5000" 
+    # Keeps terminal open for your human-in-the-loop approval input
+    stdin_open: true
+    tty: true
+    # Installs required libs on the fly and starts the agent
+    command: sh -c "pip install flask openai netmiko && python agent.py"
+    networks:
+      - demo-network
+
+  # ==========================================
+  # LAYER 4: MONITORING (PROMETHEUS)
+  # ==========================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./alert.rules:/etc/prometheus/alert.rules
+    ports:
+      - "9090:9090"
+    networks:
+      - demo-network
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    ports:
+      - "9093:9093"
+    networks:
+      - demo-network
+
+  # ==========================================
+  # LAYER 5: THE SYNCHRONIZED TRIGGER
+  # ==========================================
+  metrics-simulator:
+    image: alpine:latest
+    container_name: metrics-simulator
+    # Sleeps for 20 seconds so the fake Prometheus metric fires EXACTLY 
+    # after the real iperf3 attack starts in Layer 2!
+    command: sh -c "apk add --no-cache netcat-openbsd && sleep 20 && while true; do echo -e 'HTTP/1.1 200 OK\n\nnetwork_traffic_packets{device=\"edge-sw-02\"} 50000' | nc -l -p 8080; done"
+    networks:
+      - demo-network
+
+networks:
+  demo-network:
+    driver: bridge
