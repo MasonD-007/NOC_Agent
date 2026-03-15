@@ -144,6 +144,7 @@ async def webhook(request: Request):
     if not alerts:
         return JSONResponse(status_code=400, content={"error": "no alerts in payload"})
 
+    # Clean up old entries from dedup cache
     now = time.time()
     expired = [fp for fp, ts in _seen_alerts.items() if now - ts > DEDUP_WINDOW_SECONDS]
     for fp in expired:
@@ -151,6 +152,7 @@ async def webhook(request: Request):
 
     accepted = []
     for alert in alerts:
+        # Deduplicate: skip if we've seen this fingerprint recently
         fingerprint = alert.get("fingerprint", "")
         if fingerprint and fingerprint in _seen_alerts:
             logger.info("Skipping duplicate alert (fingerprint=%s)", fingerprint)
@@ -169,6 +171,7 @@ async def webhook(request: Request):
             "alert": alert,
         })
 
+        # Process in background so we return 200 to Alertmanager immediately
         asyncio.create_task(_process_alert(alert, alert_id))
         accepted.append(alert_id)
 
