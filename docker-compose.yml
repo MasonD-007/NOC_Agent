@@ -75,7 +75,7 @@ services:
     container_name: network-monitor
     working_dir: /app
     volumes:
-      - ./promethisus:/app
+      - ./prometheus:/app
       - /var/run/docker.sock:/var/run/docker.sock  # lets it call docker stats
     command: sh -c "pip install docker requests && python network_monitor.py"
     depends_on:
@@ -88,7 +88,7 @@ services:
     container_name: log-aggregator
     working_dir: /app
     volumes:
-      - ./promethisus:/app
+      - ./prometheus:/app
     ports:
       - "8000:8000"
     command: sh -c "pip install flask prometheus-client && python log_aggregator.py"
