@@ -289,3 +289,128 @@
   color: var(--text-muted);
   font-style: italic;
 }
+
+/* ── Tool Call Cards ───────────────────────────────────────── */
+
+.toolCallList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--phase-color);
+}
+
+.toolCard {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-bright);
+  background: var(--bg-base);
+  overflow: hidden;
+}
+
+.toolCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+}
+
+.toolName {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--phase-color);
+}
+
+.toolDevice {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+.toolStatusBadge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+
+.toolStatusSuccess {
+  color: var(--green, #4ade80);
+  background: color-mix(in srgb, var(--green, #4ade80) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--green, #4ade80) 30%, transparent);
+}
+
+.toolStatusError {
+  color: var(--red, #f87171);
+  background: color-mix(in srgb, var(--red, #f87171) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--red, #f87171) 30%, transparent);
+}
+
+.toolStatusPending {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.toolArgSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.toolArgRow {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 3px 12px;
+}
+
+.toolArgKey {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.toolArgVal {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.toolOutputSection {
+  padding: 8px 12px;
+}
+
+.toolOutputError {
+  background: color-mix(in srgb, var(--red, #f87171) 6%, transparent);
+}
+
+.toolOutputPre {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.toolOutputEmpty {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}

@@ -113,7 +113,22 @@ async def chat(request: Request):
                         if msg.content:
                             yield f"data: {json.dumps({'type': 'agent', 'content': msg.content})}\n\n"
                     elif msg.type == "tool":
-                        yield f"data: {json.dumps({'type': 'tool_result', 'name': msg.name, 'output': msg.content})}\n\n"
+                        content = msg.content
+                        if isinstance(content, list):
+                            parsed_parts = []
+                            for block in content:
+                                text = block.get("text", "") if isinstance(block, dict) else str(block)
+                                try:
+                                    parsed_parts.append(json.loads(text))
+                                except (json.JSONDecodeError, TypeError):
+                                    parsed_parts.append(text)
+                            content = parsed_parts[0] if len(parsed_parts) == 1 else parsed_parts
+                        elif isinstance(content, str):
+                            try:
+                                content = json.loads(content)
+                            except (json.JSONDecodeError, TypeError):
+                                pass
+                        yield f"data: {json.dumps({'type': 'tool_result', 'name': msg.name, 'output': content})}\n\n"
                     elif msg.content:
                         yield f"data: {json.dumps({'type': 'agent', 'content': msg.content})}\n\n"
         session_store[session_id] = history + collected
