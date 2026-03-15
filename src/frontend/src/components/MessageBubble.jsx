@@ -21,8 +21,8 @@ const PHASE_META = {
   investigate: {
     icon: Search,
     label: 'Investigation',
-    color: 'var(--cyan)',
-    bg: 'var(--cyan-bg)',
+    color: 'var(--yellow)',
+    bg: 'var(--yellow-bg)',
   },
   recommend: {
     icon: Lightbulb,
@@ -33,8 +33,8 @@ const PHASE_META = {
   report: {
     icon: FileText,
     label: 'Response',
-    color: 'var(--purple)',
-    bg: 'var(--purple-bg)',
+    color: 'var(--green)',
+    bg: 'var(--green-bg)',
   },
 }
 
