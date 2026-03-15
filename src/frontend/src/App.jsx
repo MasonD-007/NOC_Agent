@@ -68,6 +68,8 @@ export default function App() {
       let toolCalls = []
       let agentText = ''
 
+      const IP_RE = /\b(?:\d{1,3}\.){3}\d{1,3}\b/
+
       const flush = (done = false) => {
         const phases = []
         if (toolCalls.length > 0) {
@@ -76,13 +78,28 @@ export default function App() {
         if (agentText.trim()) {
           phases.push({ name: 'report', label: 'Response', content: agentText.trim() })
         }
+
+        let suggestExplain = null
+        if (done) {
+          // Only look for IPs inside ssh_execute calls — show the button whenever
+          // SSH remediation happened, regardless of whether explain_threat was also called.
+          for (const tc of toolCalls) {
+            if (tc.name === 'ssh_execute') {
+              const match = JSON.stringify(tc.args).match(IP_RE)
+              if (match) { suggestExplain = match[0]; break }
+            }
+          }
+        }
+
         setConversations((prev) =>
           prev.map((c) =>
             c.id === convId
               ? {
                   ...c,
                   messages: c.messages.map((m) =>
-                    m.id === agentMsgId ? { ...m, phases, streaming: !done } : m
+                    m.id === agentMsgId
+                      ? { ...m, phases, streaming: !done, ...(suggestExplain ? { suggestExplain } : {}) }
+                      : m
                   ),
                 }
               : c
@@ -183,7 +200,7 @@ export default function App() {
       />
       <div className={styles.main}>
         <Header conversation={activeConversation} />
-        <ChatWindow messages={activeConversation?.messages ?? []} />
+        <ChatWindow messages={activeConversation?.messages ?? []} onSuggest={handleSend} />
         <InputBar onSend={handleSend} loading={loading} />
       </div>
     </div>

@@ -38,13 +38,21 @@ const PHASE_META = {
   },
 }
 
+const RISK_STATUS = { critical: 'error', high: 'error', medium: 'warn', low: 'success' }
+
 function resolveToolResult(result) {
   if (result === null) return { status: 'pending', outputText: '', device: null }
   if (typeof result === 'object') {
-    const status = result.status === 'success' ? 'success' : 'error'
+    // explain_threat result shape
+    if (result.risk_level) {
+      const status = RISK_STATUS[result.risk_level] ?? 'success'
+      const { ip, ...rest } = result
+      const outputText = JSON.stringify(rest, null, 2)
+      return { status, outputText, device: ip ?? null }
+    }
+    const status = result.status === 'success' ? 'success' : result.status === 'failed' ? 'error' : 'success'
     const outputText = result.output ?? result.error ?? ''
-    const device = result.device ?? null
-    return { status, outputText, device }
+    return { status, outputText, device: result.device ?? null }
   }
   // Plain string fallback
   const lower = String(result).toLowerCase()
@@ -68,7 +76,8 @@ function ToolCallCard({ tc }) {
         {device && <span className={styles.toolDevice}>{device}</span>}
         {status === 'pending' && <span className={styles.toolStatusPending}>running…</span>}
         {status === 'success' && <span className={`${styles.toolStatusBadge} ${styles.toolStatusSuccess}`}>✓ success</span>}
-        {status === 'error' && <span className={`${styles.toolStatusBadge} ${styles.toolStatusError}`}>✗ error</span>}
+        {status === 'error'   && <span className={`${styles.toolStatusBadge} ${styles.toolStatusError}`}>✗ error</span>}
+        {status === 'warn'    && <span className={`${styles.toolStatusBadge} ${styles.toolStatusWarn}`}>⚠ medium</span>}
       </div>
 
       {displayArgs.length > 0 && (
@@ -162,10 +171,12 @@ function StreamingIndicator() {
   )
 }
 
-export default function MessageBubble({ message }) {
+export default function MessageBubble({ message, onSuggest }) {
+  const [suggestDismissed, setSuggestDismissed] = useState(false)
   const isUser = message.role === 'user'
   const isStreaming = !isUser && message.streaming
   const hasPhases = !isUser && message.phases?.length > 0
+  const showSuggest = !isUser && !isStreaming && message.suggestExplain && !suggestDismissed
 
   return (
     <div className={`${styles.row} ${isUser ? styles.rowUser : styles.rowAgent}`}>
@@ -201,6 +212,21 @@ export default function MessageBubble({ message }) {
           <div className={styles.thinkingBubble}>
             <StreamingIndicator />
             <span className={styles.thinkingLabel}>Thinking…</span>
+          </div>
+        )}
+
+        {/* Explain Threat suggestion */}
+        {showSuggest && (
+          <div className={styles.suggestBox}>
+            <span className={styles.suggestText}>
+              Want a full threat breakdown for <code className={styles.suggestIp}>{message.suggestExplain}</code>?
+            </span>
+            <button
+              className={styles.suggestBtn}
+              onClick={() => { setSuggestDismissed(true); onSuggest?.(`explain_threat("${message.suggestExplain}")`) }}
+            >
+              Explain Threat
+            </button>
           </div>
         )}
       </div>

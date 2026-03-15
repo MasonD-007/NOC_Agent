@@ -25,7 +25,7 @@ function EmptyState() {
   )
 }
 
-export default function ChatWindow({ messages }) {
+export default function ChatWindow({ messages, onSuggest }) {
   const bottomRef = useRef(null)
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function ChatWindow({ messages }) {
       ) : (
         <div className={styles.messages}>
           {messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} />
+            <MessageBubble key={msg.id} message={msg} onSuggest={onSuggest} />
           ))}
           <div ref={bottomRef} />
         </div>
