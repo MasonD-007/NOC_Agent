@@ -48,7 +48,7 @@ async def health():
     return {"status": "ok"}
 
 
-@app.post("/webhook")
+@app.post("/alert")
 async def webhook(request: Request):
     payload = await request.json()
     alerts = payload.get("alerts", [])

@@ -11,5 +11,5 @@ route:
 receivers:
   - name: "ai-agent-webhook"
     webhook_configs:
-      - url: "http://ai-agent:5000/webhook"
+      - url: "http://ai-agent:5000/alert"
         send_resolved: true
