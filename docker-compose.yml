@@ -75,7 +75,7 @@ services:
     container_name: log-aggregator
     working_dir: /app
     volumes:
-      - ./promethisus/log_aggregator.py:/app/log_aggregator.py
+      - ./prometheus/log_aggregator.py:/app/log_aggregator.py
     ports:
       - "8000:8000"
     command: sh -c "pip install flask prometheus-client && python log_aggregator.py"
