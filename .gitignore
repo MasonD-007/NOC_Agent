@@ -1,11 +1,40 @@
-# Test files
-promethisus/test_*.py
-test_*.py
-
-# Environment
+# ─── Environment ──────────────────────────────────────────────
 .env
+.env.*
+!.env.example
 
-# Python
+# ─── Python ───────────────────────────────────────────────────
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+
+# ─── Node / Frontend ──────────────────────────────────────────
+node_modules/
+src/frontend/dist/
+src/frontend/.vite/
+src/frontend/coverage/
+
+# ─── OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Editors ──────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ─── Docker ───────────────────────────────────────────────────
+*.log
+
+# ─── Test files ───────────────────────────────────────────────
+promethisus/test_*.py
+test_*.py
