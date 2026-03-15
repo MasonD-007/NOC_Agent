@@ -97,7 +97,7 @@ services:
     environment:
       - NEBIUS_API_KEY=${NEBIUS_API_KEY}
     ports:
-      - "5050:5000"
+      - "5050:5050"
     depends_on:
       - mcp-server
     networks:
