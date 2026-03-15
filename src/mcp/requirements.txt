@@ -6,3 +6,4 @@ pydantic
 netmiko
 starlette
 uvicorn
+requests
