@@ -1,5 +1,0 @@
-mcp
-python-dotenv
-docker
-prometheus-api-client
-pydantic
