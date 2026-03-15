@@ -1,5 +1,17 @@
 version: '3.8'
 
+# ==========================================
+# VOLUME STRUCTURE (for future reference)
+# ==========================================
+# volumes/              <- Data directory (gitignored)
+#   ├── prometheus/     <- Prometheus TSDB data (future)
+#   ├── alertmanager/  <- AlertManager data (future)
+#   └── logs/           <- Container logs (future)
+#
+# config/               <- Configuration files (git tracked)
+# prometheus/           <- Scripts (git tracked)
+# ==========================================
+
 services:
   # ==========================================
   # LAYER 1: THE NETWORK INFRASTRUCTURE
@@ -36,7 +48,7 @@ services:
       - SUDO_ACCESS=true
     volumes:
       # Mounts the script to auto-start the iperf3 server on boot
-      - ./init-iperf.sh:/custom-cont-init.d/init-iperf.sh
+      - ./config/init-iperf.sh:/custom-cont-init.d/init-iperf.sh
     networks:
       - demo-network
 

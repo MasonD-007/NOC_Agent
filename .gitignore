@@ -5,6 +5,10 @@ test_*.py
 # Environment
 .env
 
+# Docker volumes data
+volumes/*
+!volumes/.gitkeep
+
 # Python
 __pycache__/
 *.pyc
