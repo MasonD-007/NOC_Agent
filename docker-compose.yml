@@ -54,24 +54,23 @@ services:
       - demo-network
 
   # ==========================================
-  # LAYER 3: INTELLIGENCE (AI AGENT & WEBHOOK)
+  # LAYER 3: THE NOC BRAIN (AGENT + MCP + FRONTEND)
   # ==========================================
-  ai-agent:
+  noc-brain:
     image: python:3.11-slim
-    container_name: ai-agent
+    container_name: noc-brain
     working_dir: /app
     volumes:
-      - ./agent.py:/app/agent.py
+      # Mounts your whole app directory so we can include HTML/CSS templates
+      - ./app:/app 
     environment:
-      - NEBIUS_API_KEY=${NEBIUS_API_KEY}
-    # Exposing 5000 so Alertmanager can hit the Flask webhook
+      # Maps the exact variable name from your .env file
+      - NEBIUS_API_KEY=${NEBIUS_APIKEY} 
     ports:
+      # Exposing 5000: Flask will serve both the Web UI and listen for Alertmanager
       - "5000:5000" 
-    # Keeps terminal open for your human-in-the-loop approval input
-    stdin_open: true
-    tty: true
-    # Installs required libs on the fly and starts the agent
-    command: sh -c "pip install flask openai netmiko && python agent.py"
+    # Installs everything and runs a unified main.py script
+    command: sh -c "pip install flask openai netmiko mcp && python main.py"
     networks:
       - demo-network
 
