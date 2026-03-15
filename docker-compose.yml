@@ -97,9 +97,19 @@ services:
     environment:
       - NEBIUS_API_KEY=${NEBIUS_API_KEY}
     ports:
-      - "5050:5000"
+      - "5050:5050"
     depends_on:
       - mcp-server
+    networks:
+      - demo-network
+
+  frontend:
+    build: ./src/frontend
+    container_name: frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - ai-agent
     networks:
       - demo-network
 
