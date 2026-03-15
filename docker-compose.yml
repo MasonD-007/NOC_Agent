@@ -62,7 +62,7 @@ services:
     working_dir: /app
     volumes:
       # Mounts your whole app directory so we can include HTML/CSS templates
-      - ./app:/app 
+      - ./src:/app 
     environment:
       # Maps the exact variable name from your .env file
       - NEBIUS_API_KEY=${NEBIUS_APIKEY} 
