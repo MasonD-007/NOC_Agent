@@ -3,3 +3,6 @@ python-dotenv
 docker
 prometheus-api-client
 pydantic
+netmiko
+starlette
+uvicorn

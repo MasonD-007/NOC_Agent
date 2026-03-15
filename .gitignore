@@ -1,9 +1,17 @@
-# ─── Environment ──────────────────────────────────────────────
+# Test files
+prometheus/test_*.py
+test_*.py
+
+# Environment
 .env
 .env.*
 !.env.example
 
-# ─── Python ───────────────────────────────────────────────────
+# Docker volumes data
+volumes/*
+!volumes/.gitkeep
+
+# Python
 __pycache__/
 *.pyc
 *.pyo

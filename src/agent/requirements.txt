@@ -3,3 +3,5 @@ langchain-openai
 langchain-core
 fastapi
 uvicorn
+langchain-mcp-adapters
+mcp
