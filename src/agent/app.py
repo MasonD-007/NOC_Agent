@@ -14,6 +14,7 @@ logger = logging.getLogger("noc-agent")
 
 mcp_client: MultiServerMCPClient | None = None
 noc_graph = None
+session_store: dict[str, list] = {}
 
 
 @asynccontextmanager
@@ -65,6 +66,7 @@ async def webhook(request: Request):
             "phase": "received",
         }
         final_state = await noc_graph.ainvoke(initial_state)
+        session_store["default"] = final_state["messages"]
         results.append({
             "alert": alert,
             "phase": final_state["phase"],
@@ -83,12 +85,16 @@ async def chat(request: Request):
     if not user_message:
         return JSONResponse(status_code=400, content={"error": "no message provided"})
 
-    logger.info("Chat message: %s", user_message)
+    session_id = payload.get("session_id", "default")
+    history = session_store.get(session_id, [])
+
+    logger.info("Chat message: %s (session=%s, history=%d msgs)", user_message, session_id, len(history))
 
     initial_state = {
         "alert": {},
         "messages": [
             SystemMessage(content=SYSTEM_PROMPT),
+            *history,
             HumanMessage(content=user_message),
         ],
         "investigation_log": [],
@@ -96,10 +102,12 @@ async def chat(request: Request):
     }
 
     async def event_stream():
+        collected = []
         async for event in noc_graph.astream(initial_state, stream_mode="updates"):
             for node_name, node_output in event.items():
                 messages = node_output.get("messages", [])
                 for msg in messages:
+                    collected.append(msg)
                     if hasattr(msg, "tool_calls") and msg.tool_calls:
                         yield f"data: {json.dumps({'type': 'tool_call', 'calls': msg.tool_calls})}\n\n"
                         if msg.content:
@@ -108,6 +116,7 @@ async def chat(request: Request):
                         yield f"data: {json.dumps({'type': 'tool_result', 'name': msg.name, 'output': msg.content})}\n\n"
                     elif msg.content:
                         yield f"data: {json.dumps({'type': 'agent', 'content': msg.content})}\n\n"
+        session_store[session_id] = history + collected
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
