@@ -13,5 +13,3 @@ receivers:
     webhook_configs:
       - url: "http://ai-agent:5050/alert"
         send_resolved: true
-        http_config:
-          timeout: 120s
