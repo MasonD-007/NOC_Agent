@@ -5,9 +5,11 @@ services:
   # LAYER 1: THE NETWORK INFRASTRUCTURE
   # ==========================================
   core-router:
-    image: lscr.io/linuxserver/openssh-server:latest
+    build: ./src/network-device
     container_name: core-router
     hostname: core-router-tx
+    cap_add:
+      - NET_ADMIN
     environment:
       - USER_NAME=admin
       - USER_PASSWORD=hackathon
@@ -19,9 +21,11 @@ services:
       - demo-network
 
   edge-sw-01:
-    image: lscr.io/linuxserver/openssh-server:latest
+    build: ./src/network-device
     container_name: edge-sw-01
     hostname: edge-sw-01
+    cap_add:
+      - NET_ADMIN
     environment:
       - USER_NAME=admin
       - USER_PASSWORD=hackathon
@@ -33,9 +37,11 @@ services:
       - demo-network
 
   edge-sw-02:
-    image: lscr.io/linuxserver/openssh-server:latest
+    build: ./src/network-device
     container_name: edge-sw-02
     hostname: edge-sw-02
+    cap_add:
+      - NET_ADMIN
     environment:
       - USER_NAME=admin
       - USER_PASSWORD=hackathon
