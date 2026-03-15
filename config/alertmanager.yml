@@ -4,8 +4,8 @@ global:
 route:
   group_by: ["alertname", "source_ip"]
   group_wait: 10s
-  group_interval: 30s
-  repeat_interval: 1h
+  group_interval: 999h
+  repeat_interval: 999h
   receiver: "ai-agent-webhook"
 
 receivers:
@@ -13,3 +13,4 @@ receivers:
     webhook_configs:
       - url: "http://ai-agent:5050/alert"
         send_resolved: true
+        max_alerts: 1
