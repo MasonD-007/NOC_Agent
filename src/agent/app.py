@@ -49,6 +49,19 @@ async def health():
     return {"status": "ok"}
 
 
+async def process_alert(alert: dict):
+    logger.info("Processing alert: %s", json.dumps(alert, indent=2))
+    initial_state = {
+        "alert": alert,
+        "messages": [],
+        "investigation_log": [],
+        "phase": "received",
+    }
+    final_state = await noc_graph.ainvoke(initial_state)
+    session_store["default"] = final_state["messages"]
+    logger.info("Alert processed, saved %d messages to session store", len(final_state["messages"]))
+
+
 @app.post("/alert")
 async def webhook(request: Request):
     payload = await request.json()
@@ -56,24 +69,10 @@ async def webhook(request: Request):
     if not alerts:
         return JSONResponse(status_code=400, content={"error": "no alerts in payload"})
 
-    results = []
     for alert in alerts:
-        logger.info("Processing alert: %s", json.dumps(alert, indent=2))
-        initial_state = {
-            "alert": alert,
-            "messages": [],
-            "investigation_log": [],
-            "phase": "received",
-        }
-        final_state = await noc_graph.ainvoke(initial_state)
-        session_store["default"] = final_state["messages"]
-        results.append({
-            "alert": alert,
-            "phase": final_state["phase"],
-            "messages": [m.content for m in final_state["messages"] if hasattr(m, "content")],
-        })
+        asyncio.create_task(process_alert(alert))
 
-    return {"processed": len(results), "results": results}
+    return JSONResponse(status_code=202, content={"accepted": len(alerts)})
 
 
 @app.post("/chat")
