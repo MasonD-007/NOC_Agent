@@ -1,0 +1,5 @@
+FROM python:3.11-slim
+WORKDIR /app
+RUN pip install --no-cache-dir flask prometheus-client
+COPY log_aggregator.py .
+CMD ["python", "log_aggregator.py"]
