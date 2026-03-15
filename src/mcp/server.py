@@ -11,6 +11,14 @@ from starlette.routing import Mount, Route
 from netmiko import ConnectHandler
 import uvicorn
 
+from tools.prometheus import (
+    _get_top_suspicious_ips,
+    _get_traffic_spike_alerts,
+    _get_failed_login_events,
+    _get_ip_event_history,
+)
+from tools.logs import _get_recent_logs
+
 load_dotenv()
 
 server = Server("noc-security-agent")
@@ -38,7 +46,6 @@ DEVICE_INVENTORY = {
         "password": "hackathon",
     },
 }
-
 
 PROMETHEUS_URL = "http://prometheus:9090"
 LOG_AGGREGATOR_URL = "http://log-aggregator:8000"
@@ -97,6 +104,58 @@ async def list_tools() -> list[Tool]:
                     "ip": {"type": "string", "description": "The source IP address to explain"},
                 },
                 "required": ["ip"],
+            },
+        ),
+        Tool(
+            name="get_traffic_spike_alerts",
+            description="Return active traffic spike alerts from Prometheus, including source IP, destination IP, and bytes per second.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "hours": {"type": ["integer", "string"], "description": "Look back N hours (default 1)", "default": 1},
+                },
+            },
+        ),
+        Tool(
+            name="get_top_suspicious_ips",
+            description="Return the top suspicious IP addresses ranked by threat score based on traffic volume, failed logins, and event rate.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "limit": {"type": ["integer", "string"], "description": "Max results to return (default 5)", "default": 5},
+                },
+            },
+        ),
+        Tool(
+            name="get_failed_login_events",
+            description="Return failed login attempts from Prometheus metrics, including source IP, target user, and count.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "hours": {"type": ["integer", "string"], "description": "Look back N hours (default 1)", "default": 1},
+                },
+            },
+        ),
+        Tool(
+            name="get_ip_event_history",
+            description="Return the full event history for a specific IP address including traffic, failed logins, event rate, and threat score.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ip": {"type": "string", "description": "IP address to look up"},
+                },
+                "required": ["ip"],
+            },
+        ),
+        Tool(
+            name="get_recent_logs",
+            description="Fetch recent security log events from the log aggregator, optionally filtered by severity (info, warning, error, critical).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "limit": {"type": ["integer", "string"], "description": "Max events to return (default 20)", "default": 20},
+                    "severity": {"type": "string", "description": "Filter by severity level (info/warning/error/critical/all)", "default": "all"},
+                },
             },
         ),
     ]
@@ -186,6 +245,21 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             "recent_activity_count": len(recent_activity),
         }
         return [TextContent(type="text", text=_json.dumps(summary))]
+
+    if name == "get_traffic_spike_alerts":
+        return _get_traffic_spike_alerts(int(arguments.get("hours", 1)))
+
+    if name == "get_top_suspicious_ips":
+        return _get_top_suspicious_ips(int(arguments.get("limit", 5)))
+
+    if name == "get_failed_login_events":
+        return _get_failed_login_events(int(arguments.get("hours", 1)))
+
+    if name == "get_ip_event_history":
+        return _get_ip_event_history(arguments.get("ip", ""))
+
+    if name == "get_recent_logs":
+        return _get_recent_logs(int(arguments.get("limit", 20)), arguments.get("severity", "all"))
 
     return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
