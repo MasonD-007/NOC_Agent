@@ -56,6 +56,12 @@ services:
   # ==========================================
   # LAYER 3: THE NOC BRAIN (AGENT + MCP + FRONTEND)
   # ==========================================
+  mcp-server:
+    build: ./src/mcp
+    container_name: mcp-server
+    networks:
+      - demo-network
+
   ai-agent:
     build: ./src/agent
     container_name: ai-agent
@@ -63,6 +69,8 @@ services:
       - NEBIUS_API_KEY=${NEBIUS_API_KEY}
     ports:
       - "5050:5000"
+    depends_on:
+      - mcp-server
     networks:
       - demo-network
 
