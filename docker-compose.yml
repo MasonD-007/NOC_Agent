@@ -17,35 +17,50 @@ services:
   # LAYER 1: THE NETWORK INFRASTRUCTURE
   # ==========================================
   core-router:
-    image: lscr.io/linuxserver/openssh-server:latest
+    build: ./src/network-device
     container_name: core-router
     hostname: core-router-tx
+    cap_add:
+      - NET_ADMIN
     environment:
       - USER_NAME=admin
       - USER_PASSWORD=hackathon
+      - PASSWORD_ACCESS=true
       - SUDO_ACCESS=true
+    ports:
+      - "2222:2222"
     networks:
       - demo-network
 
   edge-sw-01:
-    image: lscr.io/linuxserver/openssh-server:latest
+    build: ./src/network-device
     container_name: edge-sw-01
     hostname: edge-sw-01
+    cap_add:
+      - NET_ADMIN
     environment:
       - USER_NAME=admin
       - USER_PASSWORD=hackathon
+      - PASSWORD_ACCESS=true
       - SUDO_ACCESS=true
+    ports:
+      - "2223:2222"
     networks:
       - demo-network
 
   edge-sw-02:
-    image: lscr.io/linuxserver/openssh-server:latest
+    build: ./src/network-device
     container_name: edge-sw-02
     hostname: edge-sw-02
+    cap_add:
+      - NET_ADMIN
     environment:
       - USER_NAME=admin
       - USER_PASSWORD=hackathon
+      - PASSWORD_ACCESS=true
       - SUDO_ACCESS=true
+    ports:
+      - "2224:2222"
     volumes:
       # Mounts the script to auto-start the iperf3 server on boot
       - ./config/init-iperf.sh:/custom-cont-init.d/init-iperf.sh
@@ -68,6 +83,14 @@ services:
   # ==========================================
   # LAYER 3: THE NOC BRAIN (AGENT + MCP + FRONTEND)
   # ==========================================
+  mcp-server:
+    build: ./src/mcp
+    container_name: mcp-server
+    ports:
+      - "8080:8080"
+    networks:
+      - demo-network
+
   ai-agent:
     build: ./src/agent
     container_name: ai-agent
@@ -75,6 +98,8 @@ services:
       - NEBIUS_API_KEY=${NEBIUS_API_KEY}
     ports:
       - "5050:5000"
+    depends_on:
+      - mcp-server
     networks:
       - demo-network
 
