@@ -15,7 +15,7 @@ groups:
       # ── Traffic Spike / DDoS ────────────────────────────────────────────────
       - alert: TrafficSpike
         expr: traffic_bytes_per_sec > 10000000
-        for: 30s
+        for: 20s
         labels:
           severity: critical
         annotations:

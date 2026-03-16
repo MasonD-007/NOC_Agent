@@ -3,7 +3,7 @@ global:
 
 route:
   group_by: ["alertname", "source_ip"]
-  group_wait: 10s
+  group_wait: 1s
   group_interval: 999h
   repeat_interval: 999h
   receiver: "ai-agent-webhook"

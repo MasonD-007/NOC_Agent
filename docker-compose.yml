@@ -76,7 +76,7 @@ services:
     hostname: unknown-device
     # Installs iperf3, waits 15 seconds for the network to boot, 
     # then blasts massive UDP traffic at edge-sw-02 for 5 minutes.
-    command: sh -c "apk add --no-cache iperf3 && sleep 15 && iperf3 -c edge-sw-02 -u -b 1000M -t 300"
+    command: sh -c "apk add --no-cache iperf3 && sleep 5 && iperf3 -c edge-sw-02 -u -b 1000M -t 300"
     networks:
       - demo-network
 
