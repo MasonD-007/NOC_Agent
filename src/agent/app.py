@@ -91,6 +91,25 @@ async def events():
     })
 
 
+def _normalize_tool_content(content):
+    """Normalize MCP tool result content to a JSON-serializable value."""
+    if isinstance(content, list):
+        parsed_parts = []
+        for block in content:
+            text = block.get("text", "") if isinstance(block, dict) else str(block)
+            try:
+                parsed_parts.append(json.loads(text))
+            except (json.JSONDecodeError, TypeError):
+                parsed_parts.append(text)
+        return parsed_parts[0] if len(parsed_parts) == 1 else parsed_parts
+    if isinstance(content, str):
+        try:
+            return json.loads(content)
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return content
+
+
 async def _process_alert(alert: dict, alert_id: str):
     """Background task: run the agent graph and broadcast events to SSE subscribers."""
     try:
@@ -122,7 +141,7 @@ async def _process_alert(alert: dict, alert_id: str):
                             "type": "tool_result",
                             "alert_id": alert_id,
                             "name": msg.name,
-                            "output": msg.content,
+                            "output": _normalize_tool_content(msg.content),
                         })
                     elif msg.content:
                         await broadcast({
@@ -215,22 +234,7 @@ async def chat(request: Request):
                         if msg.content:
                             yield f"data: {json.dumps({'type': 'agent', 'content': msg.content})}\n\n"
                     elif msg.type == "tool":
-                        content = msg.content
-                        if isinstance(content, list):
-                            parsed_parts = []
-                            for block in content:
-                                text = block.get("text", "") if isinstance(block, dict) else str(block)
-                                try:
-                                    parsed_parts.append(json.loads(text))
-                                except (json.JSONDecodeError, TypeError):
-                                    parsed_parts.append(text)
-                            content = parsed_parts[0] if len(parsed_parts) == 1 else parsed_parts
-                        elif isinstance(content, str):
-                            try:
-                                content = json.loads(content)
-                            except (json.JSONDecodeError, TypeError):
-                                pass
-                        yield f"data: {json.dumps({'type': 'tool_result', 'name': msg.name, 'output': content})}\n\n"
+                        yield f"data: {json.dumps({'type': 'tool_result', 'name': msg.name, 'output': _normalize_tool_content(msg.content)})}\n\n"
                     elif msg.content:
                         yield f"data: {json.dumps({'type': 'agent', 'content': msg.content})}\n\n"
         session_store[session_id] = history + collected
