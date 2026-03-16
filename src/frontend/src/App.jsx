@@ -6,6 +6,7 @@ import InputBar from './components/InputBar'
 import styles from './App.module.css'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5050'
+const IP_RE = /\b(?:\d{1,3}\.){3}\d{1,3}\b/
 
 function nowTs() {
   return new Date().toLocaleTimeString('en-US', {
@@ -42,7 +43,7 @@ export default function App() {
           const alertName = ev.alert_name || 'Alert'
           const ts = nowTs()
 
-          alertStreams.current[aid] = { convId, agentMsgId, toolLines: '', agentText: '' }
+          alertStreams.current[aid] = { convId, agentMsgId, toolCalls: [], agentText: '' }
 
           const alertSummary = ev.alert
             ? `**${alertName}**\n\`\`\`json\n${JSON.stringify(ev.alert, null, 2)}\n\`\`\``
@@ -71,19 +72,33 @@ export default function App() {
 
         const flush = (done = false) => {
           const phases = []
-          if (stream.toolLines.trim()) {
-            phases.push({ name: 'investigate', label: 'Investigation', content: stream.toolLines.trim() })
+          if (stream.toolCalls.length > 0) {
+            phases.push({ name: 'investigate', label: 'Investigation', content: stream.toolCalls })
           }
           if (stream.agentText.trim()) {
             phases.push({ name: 'report', label: 'Response', content: stream.agentText.trim() })
           }
+
+          let suggestExplain = null
+          if (done && stream.toolCalls.length > 0) {
+            const alreadyExplained = stream.toolCalls.some((tc) => tc.name === 'explain_threat')
+            if (!alreadyExplained) {
+              for (const tc of stream.toolCalls) {
+                const match = JSON.stringify(tc.args).match(IP_RE)
+                if (match) { suggestExplain = match[0]; break }
+              }
+            }
+          }
+
           setConversations((prev) =>
             prev.map((c) =>
               c.id === convId
                 ? {
                     ...c,
                     messages: c.messages.map((m) =>
-                      m.id === agentMsgId ? { ...m, phases, streaming: !done } : m
+                      m.id === agentMsgId
+                        ? { ...m, phases, streaming: !done, ...(suggestExplain ? { suggestExplain } : {}) }
+                        : m
                     ),
                   }
                 : c
@@ -93,12 +108,18 @@ export default function App() {
 
         if (ev.type === 'tool_call') {
           for (const call of ev.calls ?? []) {
-            const args = JSON.stringify(call.args ?? {})
-            stream.toolLines += `→ ${call.name}(${args})\n`
+            stream.toolCalls = [...stream.toolCalls, { name: call.name, args: call.args ?? {}, result: null }]
           }
           flush()
         } else if (ev.type === 'tool_result') {
-          stream.toolLines += `← ${ev.name}: ${ev.output}\n`
+          let matched = false
+          stream.toolCalls = stream.toolCalls.map((tc) => {
+            if (!matched && tc.name === ev.name && tc.result === null) {
+              matched = true
+              return { ...tc, result: ev.output }
+            }
+            return tc
+          })
           flush()
         } else if (ev.type === 'agent') {
           stream.agentText += ev.content
@@ -165,8 +186,6 @@ export default function App() {
       let toolCalls = []
       let agentText = ''
 
-      const IP_RE = /\b(?:\d{1,3}\.){3}\d{1,3}\b/
-
       const flush = (done = false) => {
         const phases = []
         if (toolCalls.length > 0) {
@@ -177,11 +196,10 @@ export default function App() {
         }
 
         let suggestExplain = null
-        if (done) {
-          // Only look for IPs inside ssh_execute calls — show the button whenever
-          // SSH remediation happened, regardless of whether explain_threat was also called.
-          for (const tc of toolCalls) {
-            if (tc.name === 'ssh_execute') {
+        if (done && toolCalls.length > 0) {
+          const alreadyExplained = toolCalls.some((tc) => tc.name === 'explain_threat')
+          if (!alreadyExplained) {
+            for (const tc of toolCalls) {
               const match = JSON.stringify(tc.args).match(IP_RE)
               if (match) { suggestExplain = match[0]; break }
             }
