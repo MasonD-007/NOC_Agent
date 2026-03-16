@@ -4,6 +4,10 @@ An AI-powered Network Operations Center that detects, investigates, and remediat
 
 ## Demo
 
+[![NOC Agent Demo](https://img.youtube.com/vi/cwtIRS0HMYg/maxresdefault.jpg)](https://www.youtube.com/watch?v=cwtIRS0HMYg)
+
+## How It Works
+
 ```
 rogue-device  ──UDP flood──►  edge-sw-02
                                   │
